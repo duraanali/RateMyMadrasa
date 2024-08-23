@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import SignUp from './signup';
-import SchoolInfo from './schoolInfo';
-import RatingSystem from './ratingSystem';
+import Link from 'next/link';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,10 +18,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <SignUp />
-        <SchoolInfo />
-        <RatingSystem />
-        {children}
+        <nav className="bg-gray-800 p-4">
+          <div className="container mx-auto flex justify-between items-center">
+            <Link href="/" className="text-white text-xl font-bold">Rate My Madrasa</Link>
+            <div>
+              <Link href="/signup" className="text-white mr-4">Sign Up</Link>
+              <Link href="/signin" className="text-white">Sign In</Link>
+            </div>
+          </div>
+        </nav>
+        <main>{children}</main>
       </body>
     </html>
   );
