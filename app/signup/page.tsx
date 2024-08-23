@@ -4,12 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { AuthError } from '@supabase/supabase-js';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
 
 export default function SignUp() {
   const [email, setEmail] = useState('');
@@ -26,14 +20,19 @@ export default function SignUp() {
     if (!validateForm()) return;
 
     try {
+      const supabase = createClientComponentClient();
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) throw error;
-
-      if (data) {
+      if (error) {
+        if (error.status === 429) {
+          setError('Too many signup attempts. Please try again later.');
+        } else {
+          throw error;
+        }
+      } else if (data) {
         setSuccess('Sign up successful! Please check your email for confirmation.');
         // Optionally, you can redirect after a delay
         // setTimeout(() => router.push('/'), 3000);
@@ -42,7 +41,7 @@ export default function SignUp() {
       if (err instanceof AuthError) {
         setError(err.message);
       } else {
-        setError('An unexpected error occurred');
+        setError('An unexpected error occurred. Please try again later.');
       }
     }
   };
@@ -73,65 +72,70 @@ export default function SignUp() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-center">
+      <div className="w-[350px] bg-white shadow-md rounded-lg">
+        <div className="p-6">
+          <div className="flex items-center justify-center mb-4">
             <img src="/madrasa-icon.png" alt="Madrasa Icon" className="w-8 h-8 mr-2" />
-            Sign Up
-          </CardTitle>
-          <CardDescription>Create a new account</CardDescription>
-        </CardHeader>
-        <CardContent>
+            <h2 className="text-2xl font-bold">Sign Up</h2>
+          </div>
+          <p className="text-center text-gray-600 mb-6">Create a new account</p>
           <form onSubmit={handleSignUp}>
-            <div className="grid w-full items-center gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                <input
                   id="email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                   required
+                  className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="password">Password</Label>
-                <Input
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <input
                   id="password"
                   type="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                   required
+                  className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
-                <Progress value={calculatePasswordStrength()} className="w-full" />
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                  <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${calculatePasswordStrength()}%` }}></div>
+                </div>
               </div>
             </div>
             {error && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <span className="block sm:inline">{error}</span>
+              </div>
             )}
             {success && (
-              <Alert variant="default" className="mt-4">
-                <AlertDescription>{success}</AlertDescription>
-              </Alert>
+              <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                <span className="block sm:inline">{success}</span>
+              </div>
             )}
-            <Button className="w-full mt-4" type="submit">
+            <button
+              className="w-full mt-4 bg-indigo-600 text-white font-bold py-2 px-4 rounded hover:bg-indigo-700 focus:outline-none focus:shadow-outline"
+              type="submit"
+            >
               Sign Up
-            </Button>
+            </button>
           </form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
+        </div>
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-center rounded-b-lg">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
             <a href="/signin" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign in
             </a>
           </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
