@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { AuthError } from '@supabase/supabase-js';
@@ -10,7 +10,18 @@ export default function SignUp() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [passwordStrength, setPasswordStrength] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    return () => {
+      setEmail('');
+      setPassword('');
+      setError(null);
+      setSuccess(null);
+      setPasswordStrength(0);
+    };
+  }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,11 +74,15 @@ export default function SignUp() {
   };
 
   const calculatePasswordStrength = () => {
-    if (password.length === 0) return 0;
-    if (password.length < 8) return 25;
-    if (password.length < 12) return 50;
-    if (password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/)) return 100;
-    return 75;
+    let strength = 0;
+    if (password.length > 0) strength += 10;
+    if (password.length >= 8) strength += 20;
+    if (password.length >= 12) strength += 20;
+    if (password.match(/[a-z]/)) strength += 10;
+    if (password.match(/[A-Z]/)) strength += 10;
+    if (password.match(/[0-9]/)) strength += 10;
+    if (password.match(/[^a-zA-Z0-9]/)) strength += 20;
+    return Math.min(strength, 100);
   };
 
   return (
@@ -100,13 +115,26 @@ export default function SignUp() {
                   type="password"
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setPassword(e.target.value);
+                    setPasswordStrength(calculatePasswordStrength());
+                  }}
                   required
                   className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
                 <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                  <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${calculatePasswordStrength()}%` }}></div>
+                  <div
+                    className={`h-2.5 rounded-full ${
+                      passwordStrength < 33 ? 'bg-red-500' :
+                      passwordStrength < 66 ? 'bg-yellow-500' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${passwordStrength}%` }}
+                  ></div>
                 </div>
+                <p className="text-xs mt-1 text-gray-500">
+                  {passwordStrength < 33 ? 'Weak' :
+                   passwordStrength < 66 ? 'Medium' : 'Strong'} password
+                </p>
               </div>
             </div>
             {error && (
